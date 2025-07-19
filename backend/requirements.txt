@@ -4,3 +4,4 @@ openai>=1.0.0
 deepface==0.0.83
 pillow
 python-multipart
+numpy<1.24
