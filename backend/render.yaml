@@ -8,3 +8,4 @@ services:
     envVars:
       - key: OPENAI_API_KEY
         value: YOUR_OPENAI_API_KEY
+    pythonVersion: 3.10.13
