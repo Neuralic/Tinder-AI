@@ -13,13 +13,13 @@ export default function Home() {
     let url = "";
     let payload = {};
     if (mode === "bio") {
-      url = "https://YOUR_BACKEND_URL/analyze-bio";
+      url = "https://tinder-ai-q1ym.onrender.com/analyze-bio";
       payload = { bio };
     } else if (mode === "reply") {
-      url = "https://YOUR_BACKEND_URL/suggest-reply";
+      url = "https://tinder-ai-q1ym.onrender.com/suggest-reply";
       payload = { message, intent };
     } else if (mode === "askout") {
-      url = "https://YOUR_BACKEND_URL/ask-out";
+      url = "https://tinder-ai-q1ym.onrender.com/ask-out";
       payload = { convo: message, tone };
     }
     try {
