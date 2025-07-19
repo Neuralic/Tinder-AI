@@ -1,6 +1,6 @@
 fastapi
 uvicorn[standard]
 openai>=1.0.0
-deepface
+deepface==0.0.83
 pillow
 python-multipart
