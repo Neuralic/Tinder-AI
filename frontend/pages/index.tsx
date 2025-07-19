@@ -49,7 +49,80 @@ export default function TinderAICopilot() {
     return () => URL.revokeObjectURL(objectUrl);
   }, [image]);
 
-  // Existing functions (analyzeBio, suggestReply, askThemOut) remain the same
+  const analyzeBio = async () => {
+    setLoading({ ...loading, bio: true });
+    setError('');
+    
+    try {
+      const response = await fetch(`${API_URL}/analyze-bio`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bio }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setBioReply(data.reply);
+    } catch (err) {
+      setError('Failed to analyze bio. Please try again.');
+      console.error(err);
+    } finally {
+      setLoading({ ...loading, bio: false });
+    }
+  };
+
+  const suggestReply = async () => {
+    setLoading({ ...loading, reply: true });
+    setError('');
+    
+    try {
+      const response = await fetch(`${API_URL}/suggest-reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setMessageReply(data.reply);
+    } catch (err) {
+      setError('Failed to generate reply. Please try again.');
+      console.error(err);
+    } finally {
+      setLoading({ ...loading, reply: false });
+    }
+  };
+
+  const askThemOut = async () => {
+    setLoading({ ...loading, askOut: true });
+    setError('');
+    
+    try {
+      const response = await fetch(`${API_URL}/ask-out`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setAskOutReply(data.reply);
+    } catch (err) {
+      setError('Failed to generate ask-out suggestion. Please try again.');
+      console.error(err);
+    } finally {
+      setLoading({ ...loading, askOut: false });
+    }
+  };
 
   // New profile analyzer function
   const analyzeProfile = async () => {
@@ -237,19 +310,258 @@ export default function TinderAICopilot() {
           
           {/* Main Content */}
           <div className="bg-gray-800/50 backdrop-blur-lg rounded-2xl border border-gray-700 shadow-xl overflow-hidden">
-            {/* Bio Analyzer (existing) */}
+            {/* Bio Analyzer */}
             {activeTab === 'bio' && (
-              // ... existing bio analyzer code
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="bg-rose-500/20 p-2 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold">Bio Analyzer</h2>
+                </div>
+                
+                <p className="text-gray-400 mb-6">
+                  Paste a Tinder bio to get a clever, flirty, and funny first message to start a conversation
+                </p>
+                
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Profile Bio</label>
+                    <textarea 
+                      value={bio} 
+                      onChange={e => setBio(e.target.value)} 
+                      placeholder="Paste a Tinder bio here..."
+                      className="w-full p-4 rounded-xl bg-gray-700/50 border border-gray-600 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all min-h-[120px]"
+                    />
+                  </div>
+                  
+                  <button 
+                    onClick={analyzeBio}
+                    disabled={loading.bio || !bio}
+                    className={`w-full font-medium py-3 px-4 rounded-xl transition-all transform focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-opacity-50 ${
+                      bio && !loading.bio
+                        ? "bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white hover:scale-[1.02]"
+                        : "bg-gray-700 text-gray-500 cursor-not-allowed"
+                    }`}
+                  >
+                    {loading.bio ? (
+                      <span className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Generating...
+                      </span>
+                    ) : "Generate Flirty Opener"}
+                  </button>
+                  
+                  {bioReply && (
+                    <div className="mt-6 p-5 bg-gray-700/50 border border-gray-600 rounded-xl animate-fadeIn">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-amber-500/20 p-2 rounded-lg flex-shrink-0">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 16v-4" />
+                            <path d="M12 8h.01" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-amber-400 mb-1">Your Flirty Opener</h3>
+                          <div className="bg-gray-800 p-4 rounded-lg mt-2 border-l-4 border-rose-500">
+                            <p className="text-gray-300 italic">{bioReply}</p>
+                          </div>
+                          <div className="mt-4 flex gap-2">
+                            <button 
+                              onClick={() => navigator.clipboard.writeText(bioReply)}
+                              className="text-sm bg-gray-700 hover:bg-gray-600 py-2 px-4 rounded-lg transition-colors flex items-center"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                              </svg>
+                              Copy
+                            </button>
+                            <button onClick={() => setBioReply('')} className="text-sm bg-gray-700 hover:bg-gray-600 py-2 px-4 rounded-lg transition-colors">
+                              Clear
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
             
-            {/* Reply Generator (existing) */}
+            {/* Reply Generator */}
             {activeTab === 'reply' && (
-              // ... existing reply generator code
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="bg-rose-500/20 p-2 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold">Reply Generator</h2>
+                </div>
+                
+                <p className="text-gray-400 mb-6">
+                  Craft a witty, fun, and engaging reply to keep the conversation going
+                </p>
+                
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Received Message</label>
+                    <textarea 
+                      value={message} 
+                      onChange={e => setMessage(e.target.value)} 
+                      placeholder="Paste a message you received..."
+                      className="w-full p-4 rounded-xl bg-gray-700/50 border border-gray-600 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all min-h-[120px]"
+                    />
+                  </div>
+                  
+                  <button 
+                    onClick={suggestReply}
+                    disabled={loading.reply || !message}
+                    className={`w-full font-medium py-3 px-4 rounded-xl transition-all transform focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-opacity-50 ${
+                      message && !loading.reply
+                        ? "bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white hover:scale-[1.02]"
+                        : "bg-gray-700 text-gray-500 cursor-not-allowed"
+                    }`}
+                  >
+                    {loading.reply ? (
+                      <span className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Crafting reply...
+                      </span>
+                    ) : "Generate Witty Reply"}
+                  </button>
+                  
+                  {messageReply && (
+                    <div className="mt-6 p-5 bg-gray-700/50 border border-gray-600 rounded-xl animate-fadeIn">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-amber-500/20 p-2 rounded-lg flex-shrink-0">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                            <path d="m12 9 4 4" />
+                            <path d="M12 17h.01" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-amber-400 mb-1">Your Perfect Reply</h3>
+                          <div className="bg-gray-800 p-4 rounded-lg mt-2 border-l-4 border-amber-500">
+                            <p className="text-gray-300 italic">"{messageReply}"</p>
+                          </div>
+                          <div className="mt-4 flex gap-2">
+                            <button 
+                              onClick={() => navigator.clipboard.writeText(messageReply)}
+                              className="text-sm bg-gray-700 hover:bg-gray-600 py-2 px-4 rounded-lg transition-colors flex items-center"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                              </svg>
+                              Copy
+                            </button>
+                            <button onClick={() => setMessageReply('')} className="text-sm bg-gray-700 hover:bg-gray-600 py-2 px-4 rounded-lg transition-colors">
+                              Clear
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
             
-            {/* Ask Them Out (existing) */}
+            {/* Ask Them Out */}
             {activeTab === 'askOut' && (
-              // ... existing ask out code
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="bg-rose-500/20 p-2 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-2xl font-bold">Ask Them Out</h2>
+                </div>
+                
+                <p className="text-gray-400 mb-6">
+                  Generate a smooth, confident way to ask your match out based on your conversation
+                </p>
+                
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Conversation Context</label>
+                    <textarea 
+                      value={context} 
+                      onChange={e => setContext(e.target.value)} 
+                      placeholder="Paste your conversation history or describe your interaction..."
+                      className="w-full p-4 rounded-xl bg-gray-700/50 border border-gray-600 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all min-h-[120px]"
+                    />
+                  </div>
+                  
+                  <button 
+                    onClick={askThemOut}
+                    disabled={loading.askOut || !context}
+                    className={`w-full font-medium py-3 px-4 rounded-xl transition-all transform focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-opacity-50 ${
+                      context && !loading.askOut
+                        ? "bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white hover:scale-[1.02]"
+                        : "bg-gray-700 text-gray-500 cursor-not-allowed"
+                    }`}
+                  >
+                    {loading.askOut ? (
+                      <span className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Generating suggestion...
+                      </span>
+                    ) : "Suggest Ask-Out Approach"}
+                  </button>
+                  
+                  {askOutReply && (
+                    <div className="mt-6 p-5 bg-gray-700/50 border border-gray-600 rounded-xl animate-fadeIn">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-amber-500/20 p-2 rounded-lg flex-shrink-0">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <polyline points="22 4 12 14.01 9 11.01" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-amber-400 mb-1">Your Smooth Approach</h3>
+                          <div className="bg-gray-800 p-4 rounded-lg mt-2 border-l-4 border-green-500">
+                            <p className="text-gray-300 italic">"{askOutReply}"</p>
+                          </div>
+                          <div className="mt-4 flex gap-2">
+                            <button 
+                              onClick={() => navigator.clipboard.writeText(askOutReply)}
+                              className="text-sm bg-gray-700 hover:bg-gray-600 py-2 px-4 rounded-lg transition-colors flex items-center"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                              </svg>
+                              Copy
+                            </button>
+                            <button onClick={() => setAskOutReply('')} className="text-sm bg-gray-700 hover:bg-gray-600 py-2 px-4 rounded-lg transition-colors">
+                              Clear
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
             
             {/* New Profile Analyzer Tab Content */}
