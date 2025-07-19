@@ -1,48 +1,87 @@
-from fastapi import FastAPI, Body
-from pydantic import BaseModel
-import openai
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from openai import OpenAI
 import os
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# 🔐 Load OpenAI API key
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# 🚀 Init FastAPI app
 app = FastAPI()
 
-class BioInput(BaseModel):
-    bio: str
+# 🔄 CORS for frontend usage
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production: ["https://yourfrontend.com"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-class ReplyInput(BaseModel):
-    message: str
-    intent: str
-
-class AskOutInput(BaseModel):
-    convo: str
-    tone: str
-
+# 1️⃣ Analyze Tinder Bio → Generate Flirty Opener
 @app.post("/analyze-bio")
-def analyze_bio(data: BioInput):
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a witty dating assistant."},
-            {"role": "user", "content": f"Based on this Tinder bio: '{data.bio}', give me 3 unique opening lines."}
-        ]
-    )
-    return {"lines": response['choices'][0]['message']['content']}
+async def analyze_bio(request: Request):
+    data = await request.json()
+    bio = data.get("bio", "")
 
+    if not bio:
+        return {"error": "No bio provided."}
+
+    prompt = f"""You're a dating AI coach. Analyze this Tinder bio and generate a clever, flirty, and funny first message to start a conversation:\n\n"{bio}"\n\nKeep it casual and creative:"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=100,
+            temperature=0.85,
+        )
+        return {"reply": response.choices[0].message.content.strip()}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# 2️⃣ Suggest a Reply → Based on Their Message
 @app.post("/suggest-reply")
-def suggest_reply(data: ReplyInput):
-    prompt = f"I'm chatting on Tinder. They said: '{data.message}'. My intent is to '{data.intent}'. Suggest 3 flirty/funny replies."
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return {"replies": response['choices'][0]['message']['content']}
+async def suggest_reply(request: Request):
+    data = await request.json()
+    message = data.get("message", "")
 
+    if not message:
+        return {"error": "No message provided."}
+
+    prompt = f"""You're a dating expert AI. Given this message received on Tinder:\n\n"{message}"\n\nCraft a witty, fun, and engaging reply that keeps the conversation going:"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=100,
+            temperature=0.85,
+        )
+        return {"reply": response.choices[0].message.content.strip()}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# 3️⃣ Ask Them Out → Based on Chat Context
 @app.post("/ask-out")
-def ask_out(data: AskOutInput):
-    prompt = f"This is my Tinder chat: '{data.convo}'. Suggest a cool, smooth, and {data.tone} way to ask them out."
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return {"askout_line": response['choices'][0]['message']['content']}
+async def ask_out(request: Request):
+    data = await request.json()
+    context = data.get("context", "")
+
+    if not context:
+        return {"error": "No context provided."}
+
+    prompt = f"""You're an AI trained in modern dating dynamics. Based on this Tinder conversation:\n\n{context}\n\nSuggest a smooth, confident way to ask them out in a non-creepy, charming way. Avoid being too forward or generic. Be human and a little playful:"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=100,
+            temperature=0.9,
+        )
+        return {"reply": response.choices[0].message.content.strip()}
+    except Exception as e:
+        return {"error": str(e)}
